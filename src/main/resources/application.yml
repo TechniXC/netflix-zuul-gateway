@@ -1,0 +1,80 @@
+server:
+  port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: netflix-zuul-gateway
+
+security:
+  oauth2:
+    client:
+      client-id: gateway_resource_server
+      client-secret: ttxdx7UWaNtPtpHh0Wh2DXo0xPGssMmX
+    resource:
+      token-info-uri: http://localhost:8443/realms/bank_realm/protocol/openid-connect/token/introspect
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+ribbon:
+  http:
+    client: enabled
+  eureka:
+    enabled: false
+
+zuul:
+  host:
+    connect-timeout-millis: 10000
+    socket-timeout-millis: 30000
+  routes:
+    auth:
+      path: /auth/**
+      stripPrefix: true
+      url: http://localhost:8443/realms/bank_realm/protocol/openid-connect/token
+    fast-rest-service:
+      path: /fast-service/**
+      stripPrefix: true
+      url: http://localhost
+    slow-rest-service-v0:
+      path: /slow-service/v0/**
+      stripPrefix: true
+      url: http://localhost:8280
+    slow-rest-service-v1:
+      path: /slow-service/v1/**
+      stripPrefix: true
+      url: http://localhost:8281
+
+gateway:
+  versions:
+    [default]:
+      fast-rest-service: 8180
+      slow-service: 8280
+    [0.0.1]:
+      fast-rest-service: 8180
+      slow-service: 8280
+    [0.0.2]:
+      fast-rest-service: 8181
+      slow-service: 8281
+
+#hystrix:
+#  command:
+#    default:
+#      circuitBreaker:
+#        enabled: false
+#      execution:
+#        isolation:
+#          thread:
+#            timeoutInMillisecounds: 100000
+#        timeout:
+#          enabled: false
